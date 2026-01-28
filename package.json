@@ -1,0 +1,16 @@
+{
+  "name": "baokim-b2b-nodejs18-example",
+  "version": "1.0.0",
+  "description": "Baokim B2B API Example using Node.js 18",
+  "main": "test_full_flow.js",
+  "scripts": {
+    "start": "node test_full_flow.js",
+    "test": "node test_full_flow.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["baokim", "b2b", "payment", "api"],
+  "author": "",
+  "license": "MIT"
+}

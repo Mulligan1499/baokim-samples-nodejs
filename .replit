@@ -1,0 +1,5 @@
+run = "node test_full_flow.js"
+entrypoint = "test_full_flow.js"
+
+[nix]
+channel = "stable-23_11"
