@@ -1,5 +1,5 @@
 /**
- * Cấu hình kết nối Baokim B2B API
+ * Cấu hình kết nối Baokim B2B API 
  * 
  * Hướng dẫn:
  * 1. Copy file này thành config.local.js
