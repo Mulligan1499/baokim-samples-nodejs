@@ -2,9 +2,7 @@
  * Cấu hình kết nối Baokim B2B API 
  * 
  * Hướng dẫn:
- * 1. Copy file này thành config.local.js
- * 2. Điền các thông tin được Baokim cung cấp
- * 3. KHÔNG commit file config.local.js lên git
+ * Điền các thông tin được Baokim cung cấp vào bên dưới
  */
 
 module.exports = {
@@ -21,7 +19,7 @@ module.exports = {
     masterMerchantCode: 'YOUR_MASTER_MERCHANT_CODE',
     subMerchantCode: 'YOUR_SUB_MERCHANT_CODE',
 
-    // RSA Keys paths
+    // RSA Keys paths (tương đối từ thư mục config/)
     merchantPrivateKeyPath: __dirname + '/../keys/merchant_private.pem',
     baokimPublicKeyPath: __dirname + '/../keys/baokim_public.pem',
 

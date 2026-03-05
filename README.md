@@ -1,163 +1,282 @@
-# Baokim B2B API - Node.js 18 Example 
+# Baokim B2B API - Node.js 18 SDK
 
-Bộ source code mẫu tích hợp Baokim B2B API, viết bằng Node.js 18+ (sử dụng native fetch).
+Bộ SDK tích hợp Baokim B2B API, viết bằng Node.js 18+ (sử dụng native fetch, không dependencies).
 
 ## 🔧 Yêu cầu
 - Node.js 18+
 
-## 📦 Cài đặt
+---
+
+## 📦 Tích hợp vào project của bạn
+
+### Bước 1: Clone SDK
 
 ```bash
-git clone https://github.com/Mulligan1499/baokim-b2b-nodejs-example.git
-cd baokim-b2b-nodejs-example
-cp config/config.js config/config.local.js
+git clone https://github.com/ITBaoKim/baokim-samples-nodejs.git
 ```
 
-Chỉnh sửa `config/config.local.js` với thông tin Baokim cung cấp:
-- `clientId`, `clientSecret` - Thông tin OAuth2
-- `merchantCode`, `masterMerchantCode`, `subMerchantCode`
-- `directClientId`, `directClientSecret`, `directMerchantCode` - Cho Direct connection
-- Đặt file `merchant_private.pem` vào thư mục `keys/`
-
-## 🚀 Quick Start
+### Bước 2: Copy thư mục `src/` vào project
 
 ```bash
-# Test tất cả APIs
-node test_full_flow.js
+cp -r baokim-samples-nodejs/src /path/to/your-project/baokim-sdk
+```
 
-# Test từng loại connection
-node test_full_flow.js basic_pro
-node test_full_flow.js host_to_host
-node test_full_flow.js direct
+Thư mục `src/` đã bao gồm sẵn config và keys, bạn chỉ cần copy 1 folder duy nhất:
+
+```
+your-project/
+├── baokim-sdk/            # Chỉ cần copy folder src/ này
+│   ├── index.js
+│   ├── BaokimAuth.js
+│   ├── Config.js
+│   ├── HttpClient.js
+│   ├── config/            # ← Config nằm sẵn trong SDK
+│   │   └── config.js      # File cấu hình (điền thông tin ở bước 3)
+│   ├── keys/              # ← Keys nằm sẵn trong SDK
+│   │   ├── merchant_private.pem
+│   │   └── baokim_public.pem
+│   ├── MasterSub/
+│   │   └── BaokimOrder.js
+│   ├── HostToHost/
+│   │   └── BaokimVA.js
+│   └── Direct/
+│       └── BaokimDirect.js
+├── logs/                  # Thư mục log (tự tạo)
+└── your-code.js
+```
+
+### Bước 3: Cấu hình
+
+Mở file `baokim-sdk/config/config.js` và điền thông tin Baokim cung cấp:
+```javascript
+module.exports = {
+    baseUrl: 'https://devtest.baokim.vn',  // hoặc https://openapi.baokim.vn
+    timeout: 30000,
+    
+    merchantCode: 'YOUR_MERCHANT_CODE',
+    clientId: 'YOUR_CLIENT_ID',
+    clientSecret: 'YOUR_CLIENT_SECRET',
+    
+    masterMerchantCode: 'YOUR_MASTER_MERCHANT_CODE',
+    subMerchantCode: 'YOUR_SUB_MERCHANT_CODE',
+    
+    // RSA Keys (đường dẫn tương đối từ thư mục config/)
+    merchantPrivateKeyPath: __dirname + '/../keys/merchant_private.pem',
+    baokimPublicKeyPath: __dirname + '/../keys/baokim_public.pem',
+    
+    // Webhook URLs
+    urlSuccess: 'https://your-domain.com/payment/success',
+    urlFail: 'https://your-domain.com/payment/fail',
+    webhookUrl: 'https://your-domain.com/webhook/baokim',
+};
+```
+
+### Bước 4: Đặt RSA Keys
+
+Đặt file Private Key (Baokim cung cấp) vào `baokim-sdk/keys/`:
+```bash
+# Copy merchant_private.pem vào baokim-sdk/keys/
+```
+
+### Bước 5: Tạo thư mục logs
+
+```bash
+mkdir -p logs
 ```
 
 ---
 
-## 📖 Hướng dẫn sử dụng
+## 🚀 Sử dụng SDK
 
-### Bước 1: Import modules
+### Khởi tạo (bắt buộc ở đầu mỗi file)
+
 ```javascript
-const { Config, BaokimAuth, BaokimOrder, BaokimVA, BaokimDirect } = require('./src');
+const { Config, BaokimAuth } = require('./baokim-sdk');
 
-// Load config
+// Load config (tự động load từ baokim-sdk/config/config.js)
 Config.load();
+
+// Khởi tạo Auth
+const auth = new BaokimAuth();
 ```
 
-### Bước 2: Khởi tạo Authentication
+---
+
+## 🔷 API 1: Lấy Access Token
+
 ```javascript
-// Lấy token (tự động cache, không cần gọi lại)
+const { Config, BaokimAuth } = require('./baokim-sdk');
+
+Config.load();
+
 const auth = new BaokimAuth();
 const token = await auth.getToken();
+
+console.log('Token:', token.substring(0, 50) + '...');
+```
+
+```bash
+node 01_get_token.js
 ```
 
 ---
 
-## 🔷 Basic/Pro - Thanh toán qua Master/Sub Merchant
+## 🔷 API 2: Tạo đơn hàng (Basic Pro - Master/Sub)
 
-**Class:** `BaokimOrder` (trong `src/MasterSub/BaokimOrder.js`)
-
-### Tạo đơn hàng
 ```javascript
+const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
+
+Config.load();
+
+const auth = new BaokimAuth();
 const orderService = new BaokimOrder(auth);
 
+const mrcOrderId = 'ORDER_' + Date.now();
+
 const result = await orderService.createOrder({
-    mrcOrderId: 'ORDER_' + Date.now(),      // Mã đơn hàng của bạn (bắt buộc)
-    totalAmount: 100000,                     // Số tiền (bắt buộc)
-    description: 'Thanh toán đơn hàng',      // Mô tả (bắt buộc)
-    paymentMethod: 1,                        // 1=VA, 6=VNPay QR (tùy chọn)
+    mrcOrderId: mrcOrderId,
+    totalAmount: 100000,
+    description: 'Thanh toan don hang ' + mrcOrderId,
     customerInfo: BaokimOrder.buildCustomerInfo(
-        'NGUYEN VAN A', 'email@example.com', '0901234567', '123 Street'
+        'Nguyen Van A', 'test@email.com', '0901234567', '123 Street'
     ),
 });
 
-if (result.success) {
-    const paymentUrl = result.data.redirect_url;
-    console.log(`Chuyển khách hàng đến: ${paymentUrl}`);
+console.log('Success:', result.success);
+if (result.success && result.data.redirect_url) {
+    console.log('Payment URL:', result.data.redirect_url);
 }
+console.log(result);
 ```
 
-### Tra cứu đơn hàng
-```javascript
-const result = await orderService.queryOrder('ORDER_123456');
-```
-
-### Hoàn tiền
-```javascript
-const result = await orderService.refundOrder('ORDER_123456', 50000, 'Hoàn tiền cho khách');
-```
-
-### Thu hộ tự động (Auto Debit)
-```javascript
-const result = await orderService.createOrder({
-    mrcOrderId: 'AD_' + Date.now(),
-    totalAmount: 0,
-    description: 'Thu hộ tự động',
-    paymentMethod: BaokimOrder.PAYMENT_METHOD_AUTO_DEBIT,
-    serviceCode: 'QL_THU_HO_1',
-    customerInfo: { name: 'NGUYEN VAN A', email: 'test@example.com', phone: '0901234567', address: '123 Street', gender: 1 },
-});
+```bash
+node 02_create_order.js
 ```
 
 ---
 
-## 🔷 Host-to-Host - Virtual Account (VA)
+## 🔷 API 3: Tra cứu đơn hàng
 
-**Class:** `BaokimVA` (trong `src/HostToHost/BaokimVA.js`)
-
-### Tạo VA động (mỗi đơn hàng 1 VA riêng)
 ```javascript
+const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
+
+Config.load();
+
+const auth = new BaokimAuth();
+const orderService = new BaokimOrder(auth);
+
+const mrcOrderId = process.argv[2] || 'ORDER_TEST';
+const result = await orderService.queryOrder(mrcOrderId);
+
+console.log('Success:', result.success);
+console.log(result);
+```
+
+```bash
+node 03_query_order.js ORDER_20260224120000_1234
+```
+
+---
+
+## 🔷 API 4: Hoàn tiền (Refund)
+
+```javascript
+const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
+
+Config.load();
+
+const auth = new BaokimAuth();
+const orderService = new BaokimOrder(auth);
+
+const mrcOrderId = process.argv[2] || 'ORDER_TEST';
+const refundAmount = parseInt(process.argv[3]) || 0;
+
+const result = await orderService.refundOrder(mrcOrderId, refundAmount, 'Hoan tien cho khach');
+
+console.log('Success:', result.success);
+console.log(result);
+```
+
+```bash
+node 04_refund_order.js ORDER_ID 50000
+```
+
+---
+
+## 🔷 API 5: Tạo Virtual Account - VA (Host-to-Host)
+
+```javascript
+const { Config, BaokimAuth, BaokimVA } = require('./baokim-sdk');
+
+Config.load();
+
+const auth = new BaokimAuth();
 const vaService = new BaokimVA(auth);
 
+const orderId = 'VA_' + Date.now();
+
 const result = await vaService.createDynamicVA(
-    'NGUYEN VAN A',           // Tên khách hàng
-    'ORDER_123',              // Mã đơn hàng
-    100000                    // Số tiền cần thu
+    'NGUYEN VAN A',    // Tên khách hàng
+    orderId,           // Mã đơn hàng
+    100000             // Số tiền
 );
 
-if (result.success) {
-    console.log(`Số VA: ${result.data.acc_no}`);
-    console.log(`Ngân hàng: ${result.data.bank_name}`);
+console.log('Success:', result.success);
+if (result.success && result.data.acc_no) {
+    console.log('Số VA:', result.data.acc_no);
 }
+console.log(result);
 ```
 
-### Tạo VA tĩnh (1 VA dùng nhiều lần)
-```javascript
-const result = await vaService.createStaticVA(
-    'TRAN VAN B',                    // Tên khách hàng
-    'CUSTOMER_001',                  // Mã định danh khách
-    '2026-12-31 23:59:59',           // Ngày hết hạn
-    10000,                           // Số tiền tối thiểu
-    10000000                         // Số tiền tối đa
-);
-```
-
-### Tra cứu giao dịch VA
-```javascript
-const result = await vaService.queryTransaction({
-    accNo: '00812345678901',    // Số VA
-});
+```bash
+node 05_create_va.js
 ```
 
 ---
 
-## 🔷 Direct Connection - Không qua Master Merchant
+## 🔷 API 6: Tra cứu giao dịch VA
 
-**Class:** `BaokimDirect` (trong `src/Direct/BaokimDirect.js`)
-
-> ⚠️ Direct connection cần credentials riêng, cấu hình trong `directClientId`, `directClientSecret`, `directMerchantCode`
-
-### Khởi tạo với Direct credentials
 ```javascript
-const directAuth = BaokimAuth.forDirectConnection();
-const directService = new BaokimDirect(directAuth);
+const { Config, BaokimAuth, BaokimVA } = require('./baokim-sdk');
+
+Config.load();
+
+const auth = new BaokimAuth();
+const vaService = new BaokimVA(auth);
+
+const result = await vaService.queryTransaction({
+    accNo: '00812345678901',   // Thay bằng số VA thật từ API 5
+});
+
+console.log('Success:', result.success);
+console.log(result);
 ```
 
-### Tạo đơn hàng Direct
+```bash
+node 06_query_va.js
+```
+
+---
+
+## 🔷 API 7: Tạo đơn hàng Direct Connection
+
+> ⚠️ Direct connection sử dụng credentials riêng (`directClientId`, `directClientSecret`). Thêm vào config nếu có.
+
 ```javascript
+const { Config, BaokimAuth, BaokimDirect } = require('./baokim-sdk');
+
+Config.load();
+
+// Direct connection dùng credentials riêng
+const directAuth = BaokimAuth.forDirectConnection();
+const directService = new BaokimDirect(directAuth);
+
+const mrcOrderId = 'DRT_' + Date.now();
+
 const result = await directService.createOrder({
-    mrcOrderId: 'DRT_' + Date.now(),
+    mrcOrderId: mrcOrderId,
     totalAmount: 150000,
-    description: 'Thanh toán Direct',
+    description: 'Thanh toan Direct ' + mrcOrderId,
     customerInfo: {
         name: 'NGUYEN VAN A',
         email: 'customer@email.com',
@@ -167,49 +286,92 @@ const result = await directService.createOrder({
     },
 });
 
-if (result.success) {
-    console.log(`Payment URL: ${result.data.redirect_url}`);
+console.log('Success:', result.success);
+if (result.success && result.data.redirect_url) {
+    console.log('Payment URL:', result.data.redirect_url);
 }
+console.log(result);
 ```
 
-### Tra cứu đơn hàng
-```javascript
-const result = await directService.queryOrder('DRT_123456');
-```
-
-### Hủy đơn hàng
-```javascript
-const result = await directService.cancelOrder('DRT_123456', 'Lý do hủy');
+```bash
+node 07_direct_order.js
 ```
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 🔷 API 8: Xử lý Webhook từ Baokim (Verify Signature)
 
+Khi có giao dịch thành công (thanh toán, hoàn tiền, VA...), **Baokim sẽ gửi HTTP POST** đến webhook URL của merchant.
+
+### Cấu hình
+
+Đặt file **Baokim Public Key** (do Baokim cung cấp) vào `baokim-sdk/keys/baokim_public.pem`.
+
+### Code example
+
+```javascript
+// webhook_server.js
+const http = require('http');
+const { Config, SignatureHelper } = require('./baokim-sdk');
+
+Config.load();
+
+const server = http.createServer((req, res) => {
+    if (req.method === 'POST' && req.url === '/webhook') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                // Lấy signature từ header
+                const signature = req.headers['signature'];
+                if (!signature) {
+                    throw new Error('Signature header not found');
+                }
+
+                // Verify signature bằng Baokim Public Key
+                const isValid = SignatureHelper.verify(body, signature);
+                if (!isValid) {
+                    throw new Error('Invalid signature');
+                }
+
+                // Parse webhook data
+                const webhookData = JSON.parse(body);
+                console.log('✅ Webhook verified! Data:', JSON.stringify(webhookData, null, 2));
+
+                // TODO: Cập nhật trạng thái đơn hàng trong database
+
+                // Trả về success
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ code: 0, message: 'Success' }));
+            } catch (e) {
+                console.error('❌ Webhook error:', e.message);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ code: 1, message: e.message }));
+            }
+        });
+    } else {
+        res.writeHead(404);
+        res.end('Not found');
+    }
+});
+
+server.listen(8080, () => console.log('Webhook server: http://localhost:8080/webhook'));
 ```
-├── config/                     # Cấu hình
-│   ├── config.js               # Template
-│   └── config.local.js         # Config thực (không commit)
-├── src/                        # Core modules
-│   ├── MasterSub/              # Basic/Pro APIs
-│   │   └── BaokimOrder.js
-│   ├── HostToHost/             # VA Host-to-Host APIs
-│   │   └── BaokimVA.js
-│   ├── Direct/                 # Direct Connection APIs
-│   │   └── BaokimDirect.js
-│   ├── BaokimAuth.js           # Authentication
-│   ├── HttpClient.js           # HTTP client
-│   ├── SignatureHelper.js      # RSA signing
-│   └── index.js                # Main exports
-├── examples/                   # Ví dụ từng API
-│   ├── basic_pro/
-│   ├── va_host_to_host/
-│   └── direct/
-├── keys/                       # RSA Keys
-│   └── merchant_private.pem    # Private key của bạn
-├── logs/                       # Log files
-└── test_full_flow.js           # Test tất cả APIs
+
+### Chạy server
+
+```bash
+node webhook_server.js
 ```
+
+### Response format
+
+Merchant cần trả về JSON với `code = 0` khi xử lý thành công:
+```json
+{"code": 0, "message": "Success"}
+```
+
+---
 
 ## 📚 API Endpoints
 
@@ -243,6 +405,7 @@ const result = await directService.cancelOrder('DRT_123456', 'Lý do hủy');
 | `Chữ ký số không hợp lệ` | Private key không đúng | Kiểm tra file `keys/merchant_private.pem` |
 | `Token expired` | Token hết hạn | SDK tự động refresh, không cần xử lý |
 | `Invalid merchant_code` | Sai mã merchant | Kiểm tra config |
+| `Config file not found` | Chưa cấu hình config.js | Mở file `config.js` và điền thông tin |
 
 ---
 © 2026 Baokim

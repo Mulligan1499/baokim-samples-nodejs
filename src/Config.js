@@ -1,6 +1,6 @@
 /**
  * Config Manager
- * Quản lý cấu hình, ưu tiên load từ config.local.js
+ * Load config từ src/config/config.js
  */
 
 const fs = require('fs');
@@ -11,16 +11,18 @@ let config = null;
 /**
  * Load config từ file
  */
-function load() {
-    const localConfigPath = path.join(__dirname, '../config/config.local.js');
-    const defaultConfigPath = path.join(__dirname, '../config/config.js');
+function load(configPath) {
+    if (configPath) {
+        config = require(configPath);
+        return config;
+    }
 
-    if (fs.existsSync(localConfigPath)) {
-        config = require(localConfigPath);
-    } else if (fs.existsSync(defaultConfigPath)) {
+    const defaultConfigPath = path.join(__dirname, 'config', 'config.js');
+
+    if (fs.existsSync(defaultConfigPath)) {
         config = require(defaultConfigPath);
     } else {
-        throw new Error('Config file not found');
+        throw new Error('Config file not found: ' + defaultConfigPath);
     }
 
     return config;
