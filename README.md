@@ -107,12 +107,16 @@ const auth = new BaokimAuth();
 ```javascript
 const { Config, BaokimAuth } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const token = await auth.getToken();
+    const auth = new BaokimAuth();
+    const token = await auth.getToken();
 
-console.log('Token:', token.substring(0, 50) + '...');
+    console.log('Token:', token.substring(0, 50) + '...');
+}
+
+main();
 ```
 
 ```bash
@@ -126,27 +130,31 @@ node 01_get_token.js
 ```javascript
 const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const orderService = new BaokimOrder(await auth.getToken());
+    const auth = new BaokimAuth();
+    const orderService = new BaokimOrder(await auth.getToken());
 
-const mrcOrderId = 'ORDER_' + Date.now();
+    const mrcOrderId = 'ORDER_' + Date.now();
 
-const result = await orderService.createOrder({
-    mrcOrderId: mrcOrderId,
-    totalAmount: 100000,
-    description: 'Thanh toan don hang ' + mrcOrderId,
-    customerInfo: BaokimOrder.buildCustomerInfo(
-        'Nguyen Van A', 'test@email.com', '0901234567', '123 Street'
-    ),
-});
+    const result = await orderService.createOrder({
+        mrcOrderId: mrcOrderId,
+        totalAmount: 100000,
+        description: 'Thanh toan don hang ' + mrcOrderId,
+        customerInfo: BaokimOrder.buildCustomerInfo(
+            'Nguyen Van A', 'test@email.com', '0901234567', '123 Street'
+        ),
+    });
 
-console.log('Success:', result.success);
-if (result.success && result.data.redirect_url) {
-    console.log('Payment URL:', result.data.redirect_url);
+    console.log('Success:', result.success);
+    if (result.success && result.data.redirect_url) {
+        console.log('Payment URL:', result.data.redirect_url);
+    }
+    console.log(result);
 }
-console.log(result);
+
+main();
 ```
 
 ```bash
@@ -160,16 +168,20 @@ node 02_create_order.js
 ```javascript
 const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const orderService = new BaokimOrder(await auth.getToken());
+    const auth = new BaokimAuth();
+    const orderService = new BaokimOrder(await auth.getToken());
 
-const mrcOrderId = process.argv[2] || 'ORDER_TEST';
-const result = await orderService.queryOrder(mrcOrderId);
+    const mrcOrderId = process.argv[2] || 'ORDER_TEST';
+    const result = await orderService.queryOrder(mrcOrderId);
 
-console.log('Success:', result.success);
-console.log(result);
+    console.log('Success:', result.success);
+    console.log(result);
+}
+
+main();
 ```
 
 ```bash
@@ -183,18 +195,22 @@ node 03_query_order.js ORDER_20260224120000_1234
 ```javascript
 const { Config, BaokimAuth, BaokimOrder } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const orderService = new BaokimOrder(await auth.getToken());
+    const auth = new BaokimAuth();
+    const orderService = new BaokimOrder(await auth.getToken());
 
-const mrcOrderId = process.argv[2] || 'ORDER_TEST';
-const refundAmount = parseInt(process.argv[3]) || 0;
+    const mrcOrderId = process.argv[2] || 'ORDER_TEST';
+    const refundAmount = parseInt(process.argv[3]) || 0;
 
-const result = await orderService.refundOrder(mrcOrderId, refundAmount, 'Hoan tien cho khach');
+    const result = await orderService.refundOrder(mrcOrderId, refundAmount, 'Hoan tien cho khach');
 
-console.log('Success:', result.success);
-console.log(result);
+    console.log('Success:', result.success);
+    console.log(result);
+}
+
+main();
 ```
 
 ```bash
@@ -208,24 +224,28 @@ node 04_refund_order.js ORDER_ID 50000
 ```javascript
 const { Config, BaokimAuth, BaokimVA } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const vaService = new BaokimVA(await auth.getToken());
+    const auth = new BaokimAuth();
+    const vaService = new BaokimVA(await auth.getToken());
 
-const orderId = 'VA_' + Date.now();
+    const orderId = 'VA_' + Date.now();
 
-const result = await vaService.createDynamicVA(
-    'NGUYEN VAN A',    // Tên khách hàng
-    orderId,           // Mã đơn hàng
-    100000             // Số tiền
-);
+    const result = await vaService.createDynamicVA(
+        'NGUYEN VAN A',    // Tên khách hàng
+        orderId,           // Mã đơn hàng
+        100000             // Số tiền
+    );
 
-console.log('Success:', result.success);
-if (result.success && result.data.acc_no) {
-    console.log('Số VA:', result.data.acc_no);
+    console.log('Success:', result.success);
+    if (result.success && result.data.acc_no) {
+        console.log('Số VA:', result.data.acc_no);
+    }
+    console.log(result);
 }
-console.log(result);
+
+main();
 ```
 
 ```bash
@@ -239,17 +259,21 @@ node 05_create_va.js
 ```javascript
 const { Config, BaokimAuth, BaokimVA } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-const auth = new BaokimAuth();
-const vaService = new BaokimVA(await auth.getToken());
+    const auth = new BaokimAuth();
+    const vaService = new BaokimVA(await auth.getToken());
 
-const result = await vaService.queryTransaction({
-    accNo: '00812345678901',   // Thay bằng số VA thật từ API 5
-});
+    const result = await vaService.queryTransaction({
+        accNo: '00812345678901',   // Thay bằng số VA thật từ API 5
+    });
 
-console.log('Success:', result.success);
-console.log(result);
+    console.log('Success:', result.success);
+    console.log(result);
+}
+
+main();
 ```
 
 ```bash
@@ -265,32 +289,36 @@ node 06_query_va.js
 ```javascript
 const { Config, BaokimAuth, BaokimDirect } = require('./baokim-sdk');
 
-Config.load();
+async function main() {
+    Config.load();
 
-// Direct connection dùng credentials riêng
-const directAuth = BaokimAuth.forDirectConnection();
-const directService = new BaokimDirect(await directAuth.getToken());
+    // Direct connection dùng credentials riêng
+    const directAuth = BaokimAuth.forDirectConnection();
+    const directService = new BaokimDirect(await directAuth.getToken());
 
-const mrcOrderId = 'DRT_' + Date.now();
+    const mrcOrderId = 'DRT_' + Date.now();
 
-const result = await directService.createOrder({
-    mrcOrderId: mrcOrderId,
-    totalAmount: 150000,
-    description: 'Thanh toan Direct ' + mrcOrderId,
-    customerInfo: {
-        name: 'NGUYEN VAN A',
-        email: 'customer@email.com',
-        phone: '0901234567',
-        address: '123 Nguyen Hue, HCM',
-        gender: 1,
-    },
-});
+    const result = await directService.createOrder({
+        mrcOrderId: mrcOrderId,
+        totalAmount: 150000,
+        description: 'Thanh toan Direct ' + mrcOrderId,
+        customerInfo: {
+            name: 'NGUYEN VAN A',
+            email: 'customer@email.com',
+            phone: '0901234567',
+            address: '123 Nguyen Hue, HCM',
+            gender: 1,
+        },
+    });
 
-console.log('Success:', result.success);
-if (result.success && result.data.redirect_url) {
-    console.log('Payment URL:', result.data.redirect_url);
+    console.log('Success:', result.success);
+    if (result.success && result.data.redirect_url) {
+        console.log('Payment URL:', result.data.redirect_url);
+    }
+    console.log(result);
 }
-console.log(result);
+
+main();
 ```
 
 ```bash
