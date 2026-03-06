@@ -19,6 +19,11 @@ module.exports = {
     masterMerchantCode: 'YOUR_MASTER_MERCHANT_CODE',
     subMerchantCode: 'YOUR_SUB_MERCHANT_CODE',
 
+    // Direct Connection (nếu có)
+    directMerchantCode: 'YOUR_DIRECT_MERCHANT_CODE',
+    directClientId: 'YOUR_DIRECT_CLIENT_ID',
+    directClientSecret: 'YOUR_DIRECT_CLIENT_SECRET',
+
     // RSA Keys paths (tương đối từ thư mục config/)
     merchantPrivateKeyPath: __dirname + '/../keys/merchant_private.pem',
     baokimPublicKeyPath: __dirname + '/../keys/baokim_public.pem',
