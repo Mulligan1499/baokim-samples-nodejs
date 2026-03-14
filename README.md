@@ -338,7 +338,6 @@ node 07_direct_order.js
 ## 🔷 API 9: Tạo Virtual Account - VA (Merchant Hosted / Direct)
 
 > ⚠️ Merchant Hosted dùng credentials riêng (`directClientId`, `directClientSecret`).
-> Khác với Host-to-Host (Master/Sub), Merchant Hosted dùng `merchantCode` thay vì `masterMerchantCode` + `subMerchantCode`.
 
 ```javascript
 const { Config, BaokimAuth, BaokimMerchantVA } = require('./baokim-sdk');
