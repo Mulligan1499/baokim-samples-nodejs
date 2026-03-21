@@ -10,6 +10,7 @@ const ErrorCode = require('../ErrorCode');
 // Endpoints
 const ENDPOINT_CREATE_ORDER = '/b2b/core/api/ext/order/send';
 const ENDPOINT_QUERY_ORDER = '/b2b/core/api/ext/order/get-order';
+const ENDPOINT_REFUND_ORDER = '/b2b/core/api/ext/refund/send';
 const ENDPOINT_CANCEL_ORDER = '/b2b/core/api/ext/order/cancel';
 
 // Payment methods
@@ -136,6 +137,49 @@ class BaokimDirect {
         }
 
         return this.sendRequest(ENDPOINT_CANCEL_ORDER, requestBody);
+    }
+
+    /**
+     * Hoàn tiền đơn hàng
+     * @param {string} mrcOrderId Mã đơn hàng của Merchant
+     * @param {string} description Lý do hoàn tiền (required)
+     * @param {number|null} amount Số tiền hoàn (null = hoàn toàn bộ)
+     * @param {string|null} accountNo Số tài khoản nhận tiền hoàn (optional, required nếu gặp lỗi 116)
+     * @param {string|null} bankNo Mã ngân hàng nhận tiền hoàn (optional, required nếu gặp lỗi 116)
+     * @returns {Promise<object>}
+     */
+    async refundOrder(mrcOrderId, description, amount = null, accountNo = null, bankNo = null) {
+        // Validate required fields
+        if (!mrcOrderId) {
+            throw new Error('Missing required field: mrcOrderId');
+        }
+        if (!description) {
+            throw new Error('Missing required field: description');
+        }
+
+        // Chuẩn bị request body với tất cả các trường
+        const requestBody = {
+            // === REQUIRED FIELDS ===
+            request_id: String(Date.now()) + Math.floor(Math.random() * 1000),
+            request_time: this.formatDateTime(),
+            merchant_code: Config.get('directMerchantCode') || Config.get('merchantCode'),
+            mrc_order_id: mrcOrderId,
+            description: description,
+        };
+
+        // === OPTIONAL FIELDS ===
+        // Chỉ thêm khi có giá trị, tránh lỗi validation từ API
+        if (amount !== null && amount !== undefined) {
+            requestBody.amount = parseInt(amount);
+        }
+        if (accountNo) {
+            requestBody.account_no = accountNo;
+        }
+        if (bankNo) {
+            requestBody.bank_no = bankNo;
+        }
+
+        return this.sendRequest(ENDPOINT_REFUND_ORDER, requestBody);
     }
 
     /**

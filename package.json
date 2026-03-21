@@ -11,6 +11,9 @@
     "node": ">=18.0.0"
   },
   "keywords": ["baokim", "b2b", "payment", "api"],
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
   "author": "",
   "license": "MIT"
 }
