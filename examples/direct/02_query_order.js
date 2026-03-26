@@ -22,10 +22,12 @@ async function main() {
 
         if (result.success) {
             console.log('✅ Tra cứu thành công!');
-            console.log(`   Order ID: ${result.data.order_id || result.data.id}`);
-            console.log(`   Status: ${result.data.status}`);
+            console.log('\n📋 Full response data:');
+            console.log(JSON.stringify(result.data, null, 2));
         } else {
             console.log(`❌ Lỗi: ${result.message}`);
+            console.log('\n📋 Full response:');
+            console.log(JSON.stringify(result.rawResponse, null, 2));
         }
     } catch (error) {
         console.error(`Error: ${error.message}`);
